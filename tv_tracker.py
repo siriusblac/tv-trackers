@@ -1,3 +1,4 @@
+from multiprocessing import Pool
 import os
 import pickle
 import requests
@@ -6,6 +7,10 @@ import xml.etree.ElementTree as ET
 import parameters
 
 
+def query_data(prepare_for_search):
+	_r_get = requests.get("http://www.omdbapi.com/?t=%s&type=series&r=xml" % (prepare_for_search))
+	return _r_get
+		
 class Period:
 	def __init__(self):
 		self.series_to_track = list()
@@ -22,6 +27,14 @@ class Period:
 		pickle.dump(self.series_to_not_track, open(parameters.PATH_STNT, 'wb'))
 		
 	def check_out(self):
+		_p_id = Pool(processes=10)
+		results = list()
 		for series_name in self.series_to_track:
 			prepare_name = '+'.join(series_name.split())
-			_r_get = requests.get("http://www.omdbapi.com/?t=%s&type=series&r=xml" % (_prepare_for_search))
+			results.append(_p_id.apply_async(query_data, args=(prepare_name, )))
+		for result in results:
+			print result.get()
+	
+p = Period()
+p.series_to_track = ['Suits', 'The big bang theory']
+p.check_out()
